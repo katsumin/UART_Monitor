@@ -1,7 +1,6 @@
 #include "RS232C_View.h"
 
 void RS232C_View::init() {
-  //
   dataView[0].init( 0, TFT_YELLOW, "TxD:" );
   dataView[1].init( 1, TFT_GREEN, "RxD:" );
   ctrlView.init();
@@ -29,10 +28,28 @@ void RS232C_View::pushSprite() {
 }
 
 void RS232C_View::clear() {
-  Serial.println("clear !");
   dataView[0].clear();
   dataView[1].clear();
   ctrlView.clear();
+}
+
+int RS232C_View::readSerial( HardwareSerial *port ) {
+  int data = -1;
+  if ( port->available() ) {
+    data = port->read();
+  }
+
+  return data;
+}
+
+void RS232C_View::initSerial( HardwareSerial *port, uint32_t bitrate, uint32_t rs_config, int pin ) {
+  port->begin(bitrate, rs_config, pin, -1);
+
+  // dummy read
+  delay(10);
+  while ( port->available() ) {
+    int data = port->read();
+  }
 }
 
 int RS232C_View::updateState() {
@@ -46,11 +63,8 @@ int RS232C_View::updateState() {
         uint32_t bitrate = configView.getBitrate();
         uint32_t rs_config = configView.getConfig();
         configView.print_settings();
-        pinMode(TxDPin, INPUT_PULLUP);
-        _serialTxd.begin(bitrate, rs_config, TxDPin, -1);
-        pinMode(RxDPin, INPUT_PULLUP);
-        _serialRxd.begin(bitrate, rs_config, RxDPin, -1);
-        clear();
+        initSerial( &_serialTxd, bitrate, rs_config, TxDPin );
+        initSerial( &_serialRxd, bitrate, rs_config, RxDPin );
         _funcA.set("STOP");
         if ( dataView[0].getMode() == MODE_BINARY ) {
           _funcB.set("CHARACTOR");
@@ -60,6 +74,7 @@ int RS232C_View::updateState() {
         _funcC.set("");
         _state = RS232C_STATE_RUNNING;
         _disp_pos = -1;
+        clear();
       }
       if ( _funcC.getButton()->wasPressed() ) {
         _serialTxd.end();
@@ -69,14 +84,10 @@ int RS232C_View::updateState() {
       }
       break;
     case RS232C_STATE_RUNNING:
-      if ( _serialTxd.available() ) {
-        txd = _serialTxd.read();
-      }
-      if ( _serialRxd.available() ) {
-        rxd = _serialRxd.read();
-      }
-      pushSprite();
+      txd = readSerial( &_serialTxd );
+      rxd = readSerial( &_serialRxd );
       scroll( txd, rxd );
+      pushSprite();
       if ( _funcA.getButton()->wasPressed() ) {
         count = dataView[0].getCount();
         if ( count > 0 ) {

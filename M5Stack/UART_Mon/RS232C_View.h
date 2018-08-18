@@ -58,6 +58,8 @@ class RS232C_View {
     FunctionButton _funcA = FunctionButton( &M5.BtnA );
     FunctionButton _funcB = FunctionButton( &M5.BtnB );
     FunctionButton _funcC = FunctionButton( &M5.BtnC );
+    int readSerial( HardwareSerial *port );
+    void initSerial( HardwareSerial *port, uint32_t bitrate, uint32_t rs_config, int pin );
 };
 
 #endif
