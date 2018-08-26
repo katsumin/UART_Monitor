@@ -60,6 +60,8 @@ int RS232C_View::updateState() {
     case RS232C_STATE_IDLE:
       if ( _funcA.getButton()->wasPressed() ) {
         // モニタ開始
+        digitalWrite(EnablePin, LOW);
+        pinMode(EnablePin, OUTPUT);
         uint32_t bitrate = configView.getBitrate();
         uint32_t rs_config = configView.getConfig();
         configView.print_settings();
@@ -89,6 +91,10 @@ int RS232C_View::updateState() {
       scroll( txd, rxd );
       pushSprite();
       if ( _funcA.getButton()->wasPressed() ) {
+        _serialTxd.end();
+        _serialRxd.end();
+        digitalWrite(EnablePin, HIGH);
+        pinMode(EnablePin, INPUT);
         count = dataView[0].getCount();
         if ( count > 0 ) {
           // データ閲覧モード

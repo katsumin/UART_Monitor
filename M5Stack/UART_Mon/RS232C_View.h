@@ -39,6 +39,7 @@
 
 #define TxDPin 17
 #define RxDPin 16
+#define EnablePin 26
 
 class RS232C_View {
   public:
